@@ -199,7 +199,7 @@ export function TtsStudio() {
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-8">
       <header className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg shadow-slate-950/40 backdrop-blur-sm">
-        <h1 className="text-3xl font-semibold text-white">ElevenLabs Polyglot Studio</h1>
+        <h1 className="text-3xl font-semibold text-white">Talk to me</h1>
         <p className="mt-2 text-sm text-slate-300">
           Generate natural-sounding speech in multiple languages powered by ElevenLabs. Choose a
           voice, tweak the tone, and preview instantly.
