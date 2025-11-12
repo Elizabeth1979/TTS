@@ -5,7 +5,7 @@ export const synthesizeSchema = z.object({
   text: z
     .string()
     .min(1, "Text is required")
-    .max(5_000, "Text must be shorter than 5,000 characters"),
+    .max(30_000, "Text must be shorter than 30,000 characters"),
   voiceId: z.string().min(1, "Voice is required"),
   language: z
     .string()

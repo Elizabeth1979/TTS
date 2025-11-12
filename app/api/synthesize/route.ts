@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { ZodError } from "zod";
 import { synthesizeSchema } from "@/lib/schemas";
 import { synthesizeSpeechStream } from "@/lib/elevenlabs";
 
@@ -9,14 +10,17 @@ export async function POST(request: NextRequest) {
 
   try {
     json = await request.json();
-  } catch {
+  } catch (error) {
+    console.error("[api/synthesize] Invalid JSON payload", error);
     return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
 
   const parsed = synthesizeSchema.safeParse(json);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
+    const message = getValidationMessage(parsed.error);
+    console.warn("[api/synthesize] Validation error:", message);
+    return NextResponse.json({ error: `Invalid input: ${message}` }, { status: 422 });
   }
 
   const payload = parsed.data;
@@ -30,19 +34,32 @@ export async function POST(request: NextRequest) {
       similarityBoost: payload.similarityBoost,
       styleExaggeration: payload.styleExaggeration,
       optimizeStreamingLatency: payload.optimizeStreamingLatency,
-      modelId: payload.modelId
+      modelId: payload.modelId,
     });
 
     return new NextResponse(audioStream, {
       headers: {
         "Content-Type": "audio/mpeg",
-        "Transfer-Encoding": "chunked"
-      }
+        "Transfer-Encoding": "chunked",
+      },
     });
   } catch (error) {
-    console.error(error);
-    const message = error instanceof Error ? error.message : "Failed to synthesize speech";
-
-    return NextResponse.json({ error: message }, { status: 502 });
+    console.error("[api/synthesize] Upstream synthesis failed", error);
+    return NextResponse.json(
+      { error: "Synthesis service failed. Please try again." },
+      { status: 502 }
+    );
   }
+}
+
+function getValidationMessage(error: ZodError): string {
+  const flattened = error.flatten();
+  const fieldErrorEntries = Object.values(flattened.fieldErrors ?? {}).flat();
+  const primaryFieldError = fieldErrorEntries.find((msg): msg is string => typeof msg === "string");
+  if (primaryFieldError) {
+    return primaryFieldError;
+  }
+
+  const formError = flattened.formErrors.find((msg): msg is string => typeof msg === "string");
+  return formError ?? "Please review the submitted values.";
 }

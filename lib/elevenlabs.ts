@@ -3,6 +3,48 @@ import { resolveLanguageCode, type LanguageCode } from "./languages";
 
 const ELEVENLABS_BASE_URL = "https://api.elevenlabs.io/v1";
 
+/**
+ * Selects the appropriate model based on language code.
+ * Hebrew requires eleven_v3, other languages can use the faster eleven_turbo_v2_5.
+ */
+export function selectModelForLanguage(languageCode?: LanguageCode, defaultModel?: string): string {
+  // Hebrew is only supported by eleven_v3
+  if (languageCode === "he") {
+    return "eleven_v3";
+  }
+
+  // For other languages, prefer turbo_v2_5 if no specific model is set
+  // If user has explicitly set a model, respect it
+  if (defaultModel && defaultModel !== "eleven_multilingual_v2") {
+    return defaultModel;
+  }
+
+  // Use turbo_v2_5 for better performance and higher character limits
+  return "eleven_turbo_v2_5";
+}
+
+/**
+ * Returns the maximum character limit for a given model.
+ */
+export function getModelCharacterLimit(modelId: string): number {
+  switch (modelId) {
+    case "eleven_v3":
+      return 3_000;
+    case "eleven_flash_v2_5":
+    case "eleven_turbo_v2_5":
+      return 30_000; // Conservative limit (API supports 40k, but we use 30k for safety)
+    case "eleven_flash_v2":
+    case "eleven_turbo_v2":
+      return 30_000;
+    case "eleven_multilingual_v2":
+    case "eleven_multilingual_v1":
+    case "eleven_monolingual_v1":
+      return 10_000;
+    default:
+      return 5_000; // Conservative default
+  }
+}
+
 export interface ElevenLabsVoice {
   id: string;
   name: string;
@@ -93,7 +135,7 @@ export async function synthesizeSpeech(input: SynthesisInput): Promise<Buffer> {
     text,
     voiceId,
     languageCode,
-    modelId = env.ELEVENLABS_MODEL_ID,
+    modelId,
     stability = 0.5,
     similarityBoost = 0.8,
     styleExaggeration,
@@ -102,10 +144,16 @@ export async function synthesizeSpeech(input: SynthesisInput): Promise<Buffer> {
     outputFormat = "mp3_44100_128"
   } = input;
 
+  // Select appropriate model based on language
+  const selectedModel = selectModelForLanguage(
+    languageCode,
+    modelId ?? env.ELEVENLABS_MODEL_ID
+  );
+
   console.info("[elevenlabs] Synthesizing speech", {
     voiceId,
     languageCode,
-    modelId,
+    modelId: selectedModel,
     textLength: text.length
   });
 
@@ -116,7 +164,7 @@ export async function synthesizeSpeech(input: SynthesisInput): Promise<Buffer> {
     return 1.0;
   };
 
-  const stabilityValue = modelId === "eleven_v3"
+  const stabilityValue = selectedModel === "eleven_v3"
     ? normalizeStabilityForV3(stability)
     : clamp(stability, 0, 1);
 
@@ -129,7 +177,7 @@ export async function synthesizeSpeech(input: SynthesisInput): Promise<Buffer> {
     },
     body: JSON.stringify({
       text,
-      model_id: modelId,
+      model_id: selectedModel,
       language_code: languageCode === "auto" ? undefined : languageCode,
       voice_settings: {
         stability: stabilityValue,
@@ -169,7 +217,7 @@ export async function synthesizeSpeechStream(input: SynthesisInput): Promise<Rea
     text,
     voiceId,
     languageCode,
-    modelId = env.ELEVENLABS_MODEL_ID,
+    modelId,
     stability = 0.5,
     similarityBoost = 0.8,
     styleExaggeration,
@@ -178,10 +226,16 @@ export async function synthesizeSpeechStream(input: SynthesisInput): Promise<Rea
     outputFormat = "mp3_44100_128"
   } = input;
 
+  // Select appropriate model based on language
+  const selectedModel = selectModelForLanguage(
+    languageCode,
+    modelId ?? env.ELEVENLABS_MODEL_ID
+  );
+
   console.info("[elevenlabs] Synthesizing speech (streaming)", {
     voiceId,
     languageCode,
-    modelId,
+    modelId: selectedModel,
     textLength: text.length
   });
 
@@ -192,7 +246,7 @@ export async function synthesizeSpeechStream(input: SynthesisInput): Promise<Rea
     return 1.0;
   };
 
-  const stabilityValue = modelId === "eleven_v3"
+  const stabilityValue = selectedModel === "eleven_v3"
     ? normalizeStabilityForV3(stability)
     : clamp(stability, 0, 1);
 
@@ -205,7 +259,7 @@ export async function synthesizeSpeechStream(input: SynthesisInput): Promise<Rea
     },
     body: JSON.stringify({
       text,
-      model_id: modelId,
+      model_id: selectedModel,
       language_code: languageCode === "auto" ? undefined : languageCode,
       voice_settings: {
         stability: stabilityValue,
