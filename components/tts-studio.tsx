@@ -245,8 +245,7 @@ export function TtsStudio() {
           <div>
             <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Talk to me</h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Generate natural-sounding speech in multiple languages powered by ElevenLabs. Choose a
-              voice, tweak the tone, and preview instantly.
+              Generate natural-sounding speech in multiple languages
             </p>
           </div>
           <ThemeToggle />
