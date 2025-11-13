@@ -294,19 +294,18 @@ export function TtsStudio() {
               )}
             </Field>
 
-            <Field
-              id="script"
-              label="3. Enter your script"
-              helper={`Up to ${currentCharLimit.toLocaleString()} characters using ${currentModel}. ${text.length.toLocaleString()}/${currentCharLimit.toLocaleString()} characters used.`}
-            >
-              {({ labelId, helperId }) => {
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                3. Enter your script
+              </span>
+              {(() => {
                 const isOverLimit = text.length > currentCharLimit;
                 const isHebrew = language === "he";
                 return (
                   <textarea
                     id="script"
-                    aria-labelledby={labelId}
-                    aria-describedby={helperId}
+                    aria-label="Enter your script"
+                    aria-describedby="script-helper"
                     value={text}
                     onChange={(event) => setText(event.target.value)}
                     rows={6}
@@ -324,8 +323,23 @@ export function TtsStudio() {
                     aria-invalid={isOverLimit}
                   />
                 );
-              }}
-            </Field>
+              })()}
+              <div className="flex items-center justify-between">
+                <span id="script-helper" className="text-xs text-slate-500 dark:text-slate-400">
+                  {`Up to ${currentCharLimit.toLocaleString()} characters using ${currentModel}. ${text.length.toLocaleString()}/${currentCharLimit.toLocaleString()} characters used.`}
+                </span>
+                {text.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => setText("")}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900 dark:focus-visible:ring-offset-slate-900"
+                    aria-label="Clear text"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
 
             <div className="flex flex-col gap-2">
               <button
@@ -423,33 +437,33 @@ export function TtsStudio() {
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
               Tap an item to replay it instantly.
             </p>
-            <div className="mt-4 grid gap-3" role="list">
+            <ul className="mt-4 grid gap-3">
               {history.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <li className="text-sm text-slate-500 dark:text-slate-400">
                   Your renders will show up here.
-                </p>
+                </li>
               ) : (
                 history.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => void handleHistoryPlay(item)}
-                    className="group flex flex-col gap-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-slate-700 transition hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-white hover:shadow dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:border-cyan-400/60 dark:hover:bg-slate-900"
-                    role="listitem"
-                  >
-                    <span className="flex items-center justify-between text-sm font-medium">
-                      {item.voiceName}
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {new Date(item.createdAt).toLocaleTimeString()}
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => void handleHistoryPlay(item)}
+                      className="group flex w-full flex-col gap-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-slate-700 transition hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-white hover:shadow dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:border-cyan-400/60 dark:hover:bg-slate-900"
+                    >
+                      <span className="flex items-center justify-between text-sm font-medium">
+                        {item.voiceName}
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {new Date(item.createdAt).toLocaleTimeString()}
+                        </span>
                       </span>
-                    </span>
-                    <span className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                      {item.text}
-                    </span>
-                  </button>
+                      <span className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                        {item.text}
+                      </span>
+                    </button>
+                  </li>
                 ))
               )}
-            </div>
+            </ul>
           </section>
         </aside>
       </main>
