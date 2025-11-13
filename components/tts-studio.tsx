@@ -59,6 +59,8 @@ export function TtsStudio() {
   const [stability, setStability] = useState(0.55);
   const [similarityBoost, setSimilarityBoost] = useState(0.85);
   const [optimizeLatency, setOptimizeLatency] = useState<0 | 1 | 2>(1);
+  const [playbackRate, setPlaybackRate] = useState(1.0);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -299,6 +301,7 @@ export function TtsStudio() {
             >
               {({ labelId, helperId }) => {
                 const isOverLimit = text.length > currentCharLimit;
+                const isHebrew = language === "he";
                 return (
                   <textarea
                     id="script"
@@ -308,7 +311,11 @@ export function TtsStudio() {
                     onChange={(event) => setText(event.target.value)}
                     rows={6}
                     placeholder="Type or paste the text you want to hear..."
+                    dir={isHebrew ? "rtl" : "ltr"}
+                    lang={language === "auto" ? undefined : language}
                     className={`w-full resize-none rounded-2xl border px-4 py-3 text-sm shadow-inner outline-none transition focus:ring-2 dark:bg-slate-950/80 ${
+                      isHebrew ? "text-right" : "text-left"
+                    } ${
                       isOverLimit
                         ? "border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-200 dark:border-red-500/40 dark:bg-red-950/20 dark:text-red-100 dark:focus:border-red-400 dark:focus:ring-red-500/30"
                         : "border-slate-200 bg-white text-slate-900 focus:border-cyan-500 focus:ring-cyan-200 dark:border-slate-700 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-500/30"
@@ -320,42 +327,68 @@ export function TtsStudio() {
               }}
             </Field>
 
-            <Field
-              id="style"
-              label="4. Voice style"
-              helper="Fine-tune stability and similarity. Higher similarity keeps the original voice tone."
-            >
-              {({ helperId }) => (
-                <>
-                  <div
-                    className="grid gap-4 md:grid-cols-2"
-                    role="group"
-                    aria-describedby={helperId}
-                  >
-                    <Slider
-                      id="stability"
-                      label={`Stability ${Math.round(stability * 100)}%`}
-                      value={stability}
-                      onChange={setStability}
-                    />
-                    <Slider
-                      id="similarity"
-                      label={`Similarity boost ${Math.round(similarityBoost * 100)}%`}
-                      value={similarityBoost}
-                      onChange={setSimilarityBoost}
-                    />
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((current) => !current)}
+                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-800 shadow-sm transition hover:border-cyan-500 focus-visible:border-cyan-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:border-cyan-400/60 dark:focus-visible:border-cyan-400 dark:focus-visible:ring-cyan-500/30"
+                aria-expanded={showAdvanced}
+              >
+                <span>Advanced Settings (Optional)</span>
+                <svg
+                  className={`h-5 w-5 text-slate-500 transition-transform dark:text-slate-400 ${
+                    showAdvanced ? "rotate-180" : ""
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showAdvanced && (
+                <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="flex flex-col gap-1">
+                      <Slider
+                        id="stability"
+                        label={`Stability ${Math.round(stability * 100)}%`}
+                        value={stability}
+                        onChange={setStability}
+                      />
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        More stable = consistent, predictable voice (good for narration). Less stable = more expressive and varied (good for storytelling).
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Slider
+                        id="similarity"
+                        label={`Clarity ${Math.round(similarityBoost * 100)}%`}
+                        value={similarityBoost}
+                        onChange={setSimilarityBoost}
+                      />
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Higher values keep the voice closer to the original character. Lower if the voice sounds muffled or unclear.
+                      </p>
+                    </div>
                   </div>
-                  <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-200">
-                    <span>Optimize streaming latency</span>
-                    <LatencySelect
-                      id="latency"
-                      value={optimizeLatency}
-                      onChange={setOptimizeLatency}
-                    />
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200">
+                      <span className="font-medium">Response Speed</span>
+                      <LatencySelect
+                        id="latency"
+                        value={optimizeLatency}
+                        onChange={setOptimizeLatency}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      Quality (slower response, best audio) • Balanced • Fast (quicker response, good audio)
+                    </p>
                   </div>
-                </>
+                </div>
               )}
-            </Field>
+            </div>
 
             {error ? <ErrorNotice ref={errorRef} message={error} /> : null}
 
@@ -377,7 +410,12 @@ export function TtsStudio() {
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
               Your latest output appears here once ready.
             </p>
-            <AudioPlayer audioRef={audioRef} src={audioSrc} />
+            <AudioPlayer
+              audioRef={audioRef}
+              src={audioSrc}
+              playbackRate={playbackRate}
+              onPlaybackRateChange={setPlaybackRate}
+            />
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-elevated backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/60">
@@ -673,26 +711,71 @@ ErrorNotice.displayName = "ErrorNotice";
 interface AudioPlayerProps {
   audioRef: React.RefObject<HTMLAudioElement>;
   src: string | null;
+  playbackRate: number;
+  onPlaybackRateChange: (rate: number) => void;
 }
 
-function AudioPlayer({ audioRef, src }: AudioPlayerProps) {
+const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+function AudioPlayer({ audioRef, src, playbackRate, onPlaybackRateChange }: AudioPlayerProps) {
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [audioRef, playbackRate]);
+
   return (
-    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
-      {src ? (
-        <audio
-          ref={audioRef}
-          controls
-          className="w-full"
-          aria-label="Generated audio preview"
-          preload="auto"
-        >
-          <source src={src} type="audio/mpeg" />
-          Your browser does not support the audio element.
-        </audio>
-      ) : (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Generate speech to preview the audio.
-        </p>
+    <div className="mt-4 flex flex-col gap-3">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
+        {src ? (
+          <audio
+            ref={audioRef}
+            controls
+            className="w-full"
+            aria-label="Generated audio preview"
+            preload="auto"
+          >
+            <source src={src} type="audio/mpeg" />
+            Your browser does not support the audio element.
+          </audio>
+        ) : (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Generate speech to preview the audio.
+          </p>
+        )}
+      </div>
+
+      {src && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+              Playback Speed
+            </span>
+            <span className="text-xs text-slate-600 dark:text-slate-400">
+              {playbackRate}x
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {PLAYBACK_RATES.map((rate) => (
+              <button
+                key={rate}
+                type="button"
+                onClick={() => onPlaybackRateChange(rate)}
+                className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${
+                  playbackRate === rate
+                    ? "bg-cyan-500 text-slate-900 shadow-sm dark:text-slate-950"
+                    : "border border-slate-200 bg-white text-slate-700 hover:border-cyan-500 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:border-cyan-400/60"
+                }`}
+                aria-pressed={playbackRate === rate}
+              >
+                {rate}x
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Control how fast the audio plays. Use slower speeds for learning or faster speeds to save time.
+          </p>
+        </div>
       )}
     </div>
   );
